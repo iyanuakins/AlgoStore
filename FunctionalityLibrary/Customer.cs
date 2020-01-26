@@ -81,6 +81,7 @@ namespace FunctionalityLibrary
                         productStringBuilder.Append($",{Cart.ProductsInCart[1].Id}");
                     }
 
+
                     string query =
                         "INSERT INTO order VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
                     SQLiteCommand command = new SQLiteCommand(query, connection);
@@ -127,5 +128,57 @@ namespace FunctionalityLibrary
             
         }
 
+        public List<Order> ViewOrdersHistory()
+        {
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                try
+                {
+                    string query = "SELECT * FROM orders WHERE user = @id";
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", Id);
+                    SQLiteDataReader reader = command.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        List<Order> orders = new List<Order>();
+                        while (reader.Read())
+                        {
+                            string productString = reader.GetString(3);
+                            string[] productIds = productString.Split(',');
+                            List<Product> products = new List<Product>();
+                            foreach (var id in productIds)
+                            {
+                                products.Add(Helper.GetProduct(int.Parse(id)));
+                            }
+
+                            //orders.Add(new Order(
+                            //                        reader.GetInt32(0),
+                            //                        reader.GetInt32(1),
+                            //                        reader.GetInt32(2),
+                            //                        products,
+                            //                        Convert.ToDouble(reader.GetFloat(4)),
+                            //                        Convert.ToDateTime(reader.GetString(5))
+                            //                    ));
+                        }
+
+                        return orders;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return null;
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+        }
     }
 }
