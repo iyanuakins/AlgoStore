@@ -144,6 +144,50 @@ namespace FunctionalityLibrary
                     Console.WriteLine(e);
                     return null;
                 }
+                finally{ connection.Close(); }
+            }
+        }
+
+        public static List<Product> ViewAllProducts()
+        {
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                try
+                {
+                    string query = "SELECT * FROM products";
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                    connection.Open();
+                    SQLiteDataReader reader = command.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        List<Product> allProducts = new List<Product>();
+                        while (reader.Read())
+                        {
+                            allProducts.Add(new Product(
+                                    reader.GetInt32(0),
+                                    reader.GetString(1),
+                                    reader.GetString(2),
+                                    Convert.ToDouble(reader.GetFloat(3)),
+                                    reader.GetInt32(4),
+                                    Convert.ToDateTime(reader.GetString(5))
+                                )
+                            );
+                        }
+
+                        return allProducts;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return null;
+                }
+                finally{ connection.Close(); }
             }
         }
     }
