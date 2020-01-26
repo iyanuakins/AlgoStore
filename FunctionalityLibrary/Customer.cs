@@ -83,7 +83,7 @@ namespace FunctionalityLibrary
 
 
                     string query =
-                        "INSERT INTO order VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
+                        "INSERT INTO orders VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
                     SQLiteCommand command = new SQLiteCommand(query, connection);
                     command.Parameters.AddWithValue("@totalProduct", productCount);
                     command.Parameters.AddWithValue("@customer", Id);

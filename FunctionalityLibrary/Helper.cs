@@ -50,12 +50,25 @@ namespace FunctionalityLibrary
             }
         }
 
+        public static bool CheckEmail(string email)
+        {
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                string query = "SELECT userid FROM users WHERE email = @email";
+                SQLiteCommand command = new SQLiteCommand(query, connection);
+                command.Parameters.AddWithValue("@email", email);
+                connection.Open();
+                SQLiteDataReader reader = command.ExecuteReader();
+
+                return reader.Read();
+            }
+        }
+
         public static void Register(string name, string email, string password)
         {
             using (SQLiteConnection connection = Helper.ConnectToDb())
             {
-                string query =
-                    "INSERT INTO order VALUES(@name, @email, @type, @password, @date, @totalOrder)";
+                string query = "INSERT INTO users VALUES(@name, @email, @type, @password, @date, @totalOrder)";
                 SQLiteCommand command = new SQLiteCommand(query, connection);
                 command.Parameters.AddWithValue("@name", name);
                 command.Parameters.AddWithValue("@email", email);
@@ -79,6 +92,57 @@ namespace FunctionalityLibrary
                 finally
                 {
                     connection.Close();
+                }
+            }
+        }
+
+        public static User Login(string email, string password)
+        {
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                try
+                {
+                    string query = "SELECT * FROM users WHERE email = @email";
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                    command.Parameters.AddWithValue("@email", email);
+                    connection.Open();
+                    SQLiteDataReader reader = command.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        if (reader.GetString(4).Equals(password))
+                        {
+                            if (reader.GetString(3).Equals("customer"))
+                            {
+                                return new Customer(
+                                                    reader.GetInt32(0),
+                                                    reader.GetString(1),
+                                                    reader.GetString(2),
+                                                    reader.GetInt32(6),
+                                                    Convert.ToDateTime(reader.GetString(5))
+                                                    );
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Invalid email or password");
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid email or password");
+                        return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return null;
                 }
             }
         }
