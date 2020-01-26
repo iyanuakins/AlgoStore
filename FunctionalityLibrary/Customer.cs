@@ -9,7 +9,8 @@ namespace FunctionalityLibrary
 {
     public class Customer : User
     {
-        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered): base(id, name, email,dateRegistered )
+        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered)
+            :base(id, name, email,dateRegistered )
         {
             TotalOrders = totalOrders;
         }
