@@ -83,7 +83,7 @@ namespace FunctionalityLibrary
 
 
                     string query =
-                        "INSERT INTO order VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
+                        "INSERT INTO orders VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
                     SQLiteCommand command = new SQLiteCommand(query, connection);
                     command.Parameters.AddWithValue("@totalProduct", productCount);
                     command.Parameters.AddWithValue("@customer", Id);
@@ -137,6 +137,7 @@ namespace FunctionalityLibrary
                     string query = "SELECT * FROM orders WHERE user = @id";
                     SQLiteCommand command = new SQLiteCommand(query, connection);
                     command.Parameters.AddWithValue("@id", Id);
+                    connection.Open();
                     SQLiteDataReader reader = command.ExecuteReader();
 
                     if (reader.Read())
@@ -152,14 +153,14 @@ namespace FunctionalityLibrary
                                 products.Add(Helper.GetProduct(int.Parse(id)));
                             }
 
-                            //orders.Add(new Order(
-                            //                        reader.GetInt32(0),
-                            //                        reader.GetInt32(1),
-                            //                        reader.GetInt32(2),
-                            //                        products,
-                            //                        Convert.ToDouble(reader.GetFloat(4)),
-                            //                        Convert.ToDateTime(reader.GetString(5))
-                            //                    ));
+                            orders.Add(new Order(
+                                                    reader.GetInt32(0),
+                                                    reader.GetInt32(1),
+                                                    reader.GetInt32(2),
+                                                    products,
+                                                    Convert.ToDouble(reader.GetFloat(4)),
+                                                    Convert.ToDateTime(reader.GetString(5))
+                                                ));
                         }
 
                         return orders;
