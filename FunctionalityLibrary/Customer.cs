@@ -176,10 +176,6 @@ namespace FunctionalityLibrary
                     Console.WriteLine(e);
                     return null;
                 }
-                finally
-                {
-                    connection.Close();
-                }
             }
         }
     }
