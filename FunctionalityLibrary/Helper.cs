@@ -10,8 +10,8 @@ namespace FunctionalityLibrary
     {
         public static SQLiteConnection ConnectToDb()
         {
-            string connectionstring = ConfigurationManager.ConnectionStrings["SqliteConnectionString"].ConnectionString;
-            return new SQLiteConnection(connectionstring);
+            string connectionString = ConfigurationManager.ConnectionStrings["SqliteConnectionString"].ConnectionString;
+            return new SQLiteConnection(connectionString);
 
         }
 

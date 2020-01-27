@@ -9,7 +9,8 @@ namespace FunctionalityLibrary
 {
     public class Customer : User
     {
-        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered): base(id, name, email,dateRegistered )
+        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered)
+            :base(id, name, email,dateRegistered )
         {
             TotalOrders = totalOrders;
         }
@@ -62,9 +63,40 @@ namespace FunctionalityLibrary
             Cart = new Cart();
         }
 
-        public void EditProfile()
+        public void EditProfile(string name = "", string password = "" )
         {
-            throw new NotImplementedException();
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                string query;
+                SQLiteCommand command;
+                if (name != "")
+                {
+                    query = "UPDATE users SET name = @name WHERE userid = @userId";
+                    command = new SQLiteCommand(query, connection);
+                    command.Parameters.AddWithValue("@name", name);
+                    command.Parameters.AddWithValue("@userId", Id);
+                }
+                else
+                {
+                    query = "UPDATE users SET password = @password WHERE userid = @userId";
+                    command = new SQLiteCommand(query, connection);
+                    command.Parameters.AddWithValue("@password", password);
+                    command.Parameters.AddWithValue("@userId", Id);
+                }
+
+                try
+                {
+                    int row = command.ExecuteNonQuery();
+                    Console.WriteLine(row > 0 ?
+                                        "Your data has been updated"
+                                        :"Something went wrong, please try again");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    Console.WriteLine("Something went wrong, please try again");
+                }
+            }
         }
 
         public void Checkout()
@@ -174,10 +206,6 @@ namespace FunctionalityLibrary
                 {
                     Console.WriteLine(e);
                     return null;
-                }
-                finally
-                {
-                    connection.Close();
                 }
             }
         }
