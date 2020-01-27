@@ -144,5 +144,48 @@ namespace FunctionalityLibrary
                 }
             }
         }
+
+        public List<Customer> ViewAllCustomers()
+        {
+            using (SQLiteConnection connection = Helper.ConnectToDb())
+            {
+                try
+                {
+                    string query = "SELECT * FROM users WHERE type = @type";
+                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                    command.Parameters.AddWithValue("@type", "customer");
+                    connection.Open();
+                    SQLiteDataReader reader = command.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        List<Customer> allCustomers = new List<Customer>();
+                        while (reader.Read())
+                        {
+                            allCustomers.Add(
+                                new Customer(
+                                    reader.GetInt32(0),
+                                    reader.GetString(1),
+                                    reader.GetString(2),
+                                    reader.GetInt32(6),
+                                    Convert.ToDateTime(reader.GetString(5))
+                                )
+                            );
+                        }
+
+                        return allCustomers;
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    return null;
+                }
+            }
+        }
     }
 }
