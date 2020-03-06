@@ -9,12 +9,14 @@ namespace FunctionalityLibrary
 {
     public class Customer : User
     {
-        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered)
-            :base(id, name, email,dateRegistered )
+        public Customer(int id, string name, string email, int totalOrders, DateTime dateRegistered, string address)
+            : base(id, name, email, dateRegistered)
         {
             TotalOrders = totalOrders;
+            Address = address;
         }
 
+        public string Address { get; private set; }
         public Cart Cart { get; private set; } = new Cart();
         public int TotalOrders { get; private set; }
         public int AddToCart(Product product)
@@ -42,12 +44,14 @@ namespace FunctionalityLibrary
 
                 Cart.TotalPrice = product.Price;
                 Cart.ProductsInCart = newProduct;
+                Console.WriteLine("\nProduct added to cart\n");
+                Console.WriteLine($"You have {Cart.ProductsInCart.Count} items in your cart");
             }
             else
             {
-                Console.WriteLine("Product already added to cart");
+                Console.WriteLine("\nProduct already added to cart\n");
             }
-            
+
             return Cart.ProductsInCart.Count;
         }
 
@@ -63,40 +67,112 @@ namespace FunctionalityLibrary
             Cart = new Cart();
         }
 
-        public void EditProfile(string name = "", string password = "" )
+        public int EditProfile(string name = "", string address = "", string password = "")
         {
-            using (SQLiteConnection connection = Helper.ConnectToDb())
+            string query;
+            if (!string.IsNullOrEmpty(name))
             {
-                string query;
-                SQLiteCommand command;
-                if (name != "")
+                query = "UPDATE users SET name = @name WHERE userid = @userId";
+                using (SQLiteConnection connection = Helper.ConnectToDb())
+                using (SQLiteCommand command = new SQLiteCommand(query, connection))
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter())
                 {
-                    query = "UPDATE users SET name = @name WHERE userid = @userId";
-                    command = new SQLiteCommand(query, connection);
                     command.Parameters.AddWithValue("@name", name);
                     command.Parameters.AddWithValue("@userId", Id);
-                }
-                else
-                {
-                    query = "UPDATE users SET password = @password WHERE userid = @userId";
-                    command = new SQLiteCommand(query, connection);
-                    command.Parameters.AddWithValue("@password", password);
-                    command.Parameters.AddWithValue("@userId", Id);
-                }
+                    try
+                    {
+                        connection.Open();
+                        adapter.UpdateCommand = command;
+                        int row = adapter.UpdateCommand.ExecuteNonQuery();
+                        if (row > 0)
+                        {
+                            Name = name;
+                            Console.WriteLine("Your name has been updated");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Something went wrong, please try again");
+                        }
 
-                try
-                {
-                    int row = command.ExecuteNonQuery();
-                    Console.WriteLine(row > 0 ?
-                                        "Your data has been updated"
-                                        :"Something went wrong, please try again");
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    Console.WriteLine("Something went wrong, please try again");
+                        return row;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        Console.WriteLine("Something went wrong, please try again");
+                        return 0;
+                    }
                 }
             }
+            else if(!string.IsNullOrEmpty(address))
+            {
+                query = "UPDATE users SET address = @address WHERE userid = @userId";
+                using (SQLiteConnection connection = Helper.ConnectToDb())
+                using (SQLiteCommand command = new SQLiteCommand(query, connection))
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter())
+                {
+                    command.Parameters.AddWithValue("@address", address);
+                    command.Parameters.AddWithValue("@userId", Id);
+                    try
+                    {
+                        connection.Open();
+                        adapter.UpdateCommand = command;
+                        int row = adapter.UpdateCommand.ExecuteNonQuery();
+                        if (row > 0)
+                        {
+                            Address = address;
+                            Console.WriteLine("Your address has been updated");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Something went wrong, please try again");
+                        }
+
+                        return row;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        Console.WriteLine("Something went wrong, please try again");
+                        return 0;
+                    }
+                }
+            }
+            else
+            {
+                query = "UPDATE users SET password = @password WHERE userid = @userId";
+                using (SQLiteConnection connection = Helper.ConnectToDb())
+                using (SQLiteCommand command = new SQLiteCommand(query, connection))
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter())
+                {
+                    command.Parameters.AddWithValue("@password", password);
+                    command.Parameters.AddWithValue("@userId", Id);
+                    try
+                    {
+                        connection.Open();
+                        adapter.UpdateCommand = command;
+                        int row = adapter.UpdateCommand.ExecuteNonQuery();
+                        if (row > 0)
+                        {
+                            Name = name;
+                            Console.WriteLine("Your password has been changed");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Something went wrong, please try again");
+                        }
+
+                        return row;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        Console.WriteLine("Something went wrong, please try again");
+                        return 0;
+                    }
+                }
+            }
+
         }
 
         public void Checkout()
@@ -104,20 +180,21 @@ namespace FunctionalityLibrary
             int productCount = Cart.ProductsInCart.Count;
             if (productCount > 0)
             {
-                using (SQLiteConnection connection = Helper.ConnectToDb())
+                StringBuilder productStringBuilder = new StringBuilder();
+                productStringBuilder.Append(Cart.ProductsInCart[0].Id);
+                for (var i = 1; i < productCount; i++)
                 {
-                    StringBuilder productStringBuilder = new StringBuilder();
-                    productStringBuilder.Append(Cart.ProductsInCart[0].Id);
-                    for (var i = 1; i <  productCount; i++)
-                    {
-                        productStringBuilder.Append($",{Cart.ProductsInCart[1].Id}");
-                    }
+                    productStringBuilder.Append($",{Cart.ProductsInCart[1].Id}");
+                }
 
-
-                    string query =
-                        "INSERT INTO orders VALUES(@totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
-                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                string query =
+                    "INSERT INTO orders VALUES(@Id, @totalProduct, @customer, @productsInOrder, @totalPrice, @orderDate)";
+                using (SQLiteConnection connection = Helper.ConnectToDb())
+                using (SQLiteCommand command = new SQLiteCommand(query, connection))
+                using (SQLiteDataAdapter adapter = new SQLiteDataAdapter())
+                {
                     command.Parameters.AddWithValue("@totalProduct", productCount);
+                    command.Parameters.AddWithValue("@Id", null);
                     command.Parameters.AddWithValue("@customer", Id);
                     command.Parameters.AddWithValue("@productsInOrder", productStringBuilder.ToString());
                     command.Parameters.AddWithValue("@totalPrice", Cart.TotalPrice);
@@ -126,23 +203,29 @@ namespace FunctionalityLibrary
                     try
                     {
                         connection.Open();
-                        int row = command.ExecuteNonQuery();
+                        adapter.InsertCommand = command;
+                        int row = adapter.InsertCommand.ExecuteNonQuery();
                         if (row > 0)
                         {
-                            try
+                            //Update customer total order count.
+                            query = "UPDATE users SET totalorders = totalorders + 1";
+
+                            using (SQLiteCommand newCommand = new SQLiteCommand(query, connection))
                             {
-                                query = "UPDATE users SET totalorders = totalorders + 1";
-                                command = new SQLiteCommand(query, connection);
-                                row = command.ExecuteNonQuery();
-                                if (row > 0)
+                                try
                                 {
-                                    Cart = new Cart();
-                                    Console.WriteLine("Your order has been processed");
+                                    adapter.UpdateCommand = newCommand;
+                                    row = adapter.UpdateCommand.ExecuteNonQuery();
+                                    if (row > 0)
+                                    {
+                                        Cart = new Cart();
+                                        Console.WriteLine("Your order has been processed");
+                                    }
                                 }
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.Message);
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine(e.Message);
+                                }
                             }
                         }
                     }
@@ -150,36 +233,48 @@ namespace FunctionalityLibrary
                     {
                         Console.WriteLine("Gosh! Something went wrong, please try again");
                     }
-                    finally
-                    {
-                        connection.Close();
-                    }
-                    
                 }
             }
-            
-        }
 
+        }
         public List<Order> ViewOrdersHistory()
         {
+            string query = "SELECT * FROM orders WHERE user = @id";
             using (SQLiteConnection connection = Helper.ConnectToDb())
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            using (SQLiteDataAdapter adapter = new SQLiteDataAdapter())
             {
                 try
-                {
-                    string query = "SELECT * FROM orders WHERE user = @id";
-                    SQLiteCommand command = new SQLiteCommand(query, connection);
+                { 
                     command.Parameters.AddWithValue("@id", Id);
                     connection.Open();
-                    SQLiteDataReader reader = command.ExecuteReader();
+                    adapter.SelectCommand = command;
+                    SQLiteDataReader reader = adapter.SelectCommand.ExecuteReader();
 
                     if (reader.Read())
                     {
                         List<Order> orders = new List<Order>();
+                        string productString = reader.GetString(3);
+                        string[] productIds = productString.Split(',');
+                        List<Product> products = new List<Product>();
+                        foreach (var id in productIds)
+                        {
+                            products.Add(Helper.GetProduct(int.Parse(id)));
+                        }
+
+                        orders.Add(new Order(
+                            reader.GetInt32(0),
+                            reader.GetInt32(1),
+                            reader.GetInt32(2),
+                            products,
+                            Convert.ToDouble(reader.GetFloat(4)),
+                            Convert.ToDateTime(reader.GetString(5))
+                        ));
                         while (reader.Read())
                         {
-                            string productString = reader.GetString(3);
-                            string[] productIds = productString.Split(',');
-                            List<Product> products = new List<Product>();
+                            productString = reader.GetString(3);
+                            productIds = productString.Split(',');
+                            products = new List<Product>();
                             foreach (var id in productIds)
                             {
                                 products.Add(Helper.GetProduct(int.Parse(id)));
